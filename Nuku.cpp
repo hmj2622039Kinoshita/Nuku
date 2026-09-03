@@ -16,6 +16,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	SetDrawScreen(DX_SCREEN_BACK); // 描画面を裏背景にする
 	while (1)
 	{
+
+
+
+
 		ScreenFlip(); // 裏画面の内容を表画面に反映させる
 		WaitTimer(1000 / FPS); // 一定時間待つ
 		if (ProcessMessage() == -1) break; // windowsから情報を受け取りエラーが起きたら終了
