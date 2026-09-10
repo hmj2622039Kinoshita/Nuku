@@ -12,7 +12,9 @@ struct OBJECT player; // プレイヤーの構造体変数
 int imgBackGrass; // 背景画像（草）
 int imgPlayer[2]; // プレイヤー画像
 int imgWayGrass1, imgWayGrass2; // 道路画像（草）
-int timer; // 車のアニメーションの速さ管理するためのタイマー
+int speed = 10; // プレイヤーの速度
+int keyTimer; // キー入力タイマー
+
 
 
 // グローバル関数
@@ -35,9 +37,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		// ゲームの骨組み処理
 		ScrollBG(1); // 背景のスクロール
 		ScrollWY(1); // 道路のスクロール
-		Player(); // プレイヤー
+		PlayerSpeed(); // プレイヤーの速度（キー入力）
+		Player(); // プレイヤーの描画
 
-
+		SetFontSize(30);
+		DrawFormatString(WIDTH / 2, HEIGHT / 2, GetColor(0,0,0),"%d",speed);
 
 
 		ScreenFlip(); // 裏画面の内容を表画面に反映させる
@@ -58,7 +62,7 @@ void InitGame(void)
 	imgPlayer[0] = LoadGraph("Material/Robot/green1.png"); // プレイヤー画像
 	imgPlayer[1] = LoadGraph("Material/Robot/green2.png");
 	imgWayGrass1 = LoadGraph("Material/Way/grass.png"); // 道路画像（草）
-	imgWayGrass2 = LoadGraph("Material/Way/grass2.png"); 
+	imgWayGrass2 = LoadGraph("Material/Way/grass2.png");
 }
 
 // ゲーム開始時の初期値
@@ -66,8 +70,10 @@ void InitVariable(void)
 {
 	// プレイヤーの構造体
 	player.x = WIDTH / 2 - 79; // プレイヤーの左上のX座標
-	player.y = HEIGHT - 140 - 118; // プレイヤーの左上のY座標
-	player.speed = 1; // プレイヤーのスピード（背景、道路、アニメーション、敵の車もこれで管理する）
+	player.y = HEIGHT - 140 - 120; // プレイヤーの左上のY座標
+	player.imageNum = 0; // プレイヤーの画像の番号
+	player.timer = 0; // タイマー
+	player.interval = 0; // フレームの間隔
 }
 
 // 背景のスクロール
@@ -92,29 +98,72 @@ void ScrollWY(int spd)
 	}
 }
 
-// プレイヤー
+// プレイヤーの速度
+void PlayerSpeed(void)
+{
+	bool left = false; // 左キーの入力状態（押されていない）
+	keyTimer++;
+	if (CheckHitKey(KEY_INPUT_LEFT) && left == false) // 上キーが初めて入力された時
+	{
+		keyTimer = 0; // タイマーリセット
+		left = true;
+		if (CheckHitKey(KEY_INPUT_UP) && keyTimer <= 18) // 上キーが左キーが押されてから0.3秒以内に入力されたとき
+		{
+			keyTimer = 0;
+			if (CheckHitKey(KEY_INPUT_RIGHT) && keyTimer <= 18) // 右キーが上キーが押されてから0.3秒以内に入力されたとき
+			{
+				speed += 10; // 速度増加
+			}
+			else
+			{
+				speed -= 10; // 速度減少
+				left = false;
+			}
+		}
+		else
+		{
+			speed -= 10;
+			left = false;
+		}
+	}
+	else if(keyTimer > 120) // 2秒間何も入力がなかったら
+	{
+		speed -= 10;
+		keyTimer = 0;
+	}
+	else {}
+}
+
+// プレイヤーの描画
 void Player(void)
 {
-	if (player.speed == 0)
+	player.timer++;
+	if (speed == 0) // 速度０の時
+	{
+		DrawGraph(player.x, player.y, imgPlayer[0], true);
+	}
+	else // 速度が０より大きいとき
+	{
+		player.interval = 23 - speed / 10; // スピードごとのフレーム間隔
+		if (player.timer >= player.interval) // 一定フレームが経過した
+		{
+			player.timer = 0;
+			if (player.imageNum == 0) // 画像番号の切り替え
+			{
+				player.imageNum = 1;
+			}
+			else
+			{
+				player.imageNum = 0;
+			}
+		}
+	}
+	if (player.imageNum == 0) // 画像番号でプレイヤーの描画
 	{
 		DrawGraph(player.x, player.y, imgPlayer[0], true);
 	}
 	else
 	{
-		timer++; //	アニメーションタイマー動かす
-		if (timer <= 10)
-		{
-			DrawGraph(player.x, player.y, imgPlayer[1], true);
-		}
-		else if (10 < timer && timer <= 20)
-		{
-			DrawGraph(player.x, player.y, imgPlayer[0], true);
-		}
-		else if (20 < timer)
-		{
-			DrawGraph(player.x, player.y, imgPlayer[1], true);
-			timer = 0; // タイマーリセット
-		}
-
+		DrawGraph(player.x, player.y + 4, imgPlayer[1], true);
 	}
 }
