@@ -17,3 +17,4 @@ void ScrollBG(int spd); // 背景のスクロール関数
 void ScrollWY(int spd); // 道路のスクロール関数
 void PlayerSpeed(void); // プレイヤーの速度用関数
 void Player(void); // プレイヤー描画用の関数
+void Distance(void); // ゴールまでの残り距離

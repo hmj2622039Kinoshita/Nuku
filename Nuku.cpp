@@ -1,5 +1,6 @@
 #include"DxLib.h"
 #include"Nuku.h" // ヘッダーファイル
+#include<time.h>
 
 //定数定義 
 const int WIDTH = 1536, HEIGHT = 896; // ウィンドウの幅と高さのピクセル数
@@ -12,9 +13,9 @@ struct OBJECT player; // プレイヤーの構造体変数
 int imgBackGrass; // 背景画像（草）
 int imgPlayer[2]; // プレイヤー画像
 int imgWayGrass1, imgWayGrass2; // 道路画像（草）
-int speed = 10; // プレイヤーの速度
+int speed = 100; // プレイヤーの速度
 int keyTimer; // キー入力タイマー
-
+int distance; // ゴールまでの残り距離（最低2000）
 
 
 // グローバル関数
@@ -27,6 +28,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	SetBackgroundColor(0, 0, 0); // 背景色の指定
 	SetDrawScreen(DX_SCREEN_BACK); // 描画面を裏背景にする
 	
+	// 距離のランダム値
+	srand((static_cast<int>(time(NULL)))); // ランダムシード
+	distance = rand() % 8001;// ゴールまでの残り距離
 	InitGame(); // 初期化用の関数を呼び出す
 	InitVariable(); // ゲーム開始時の初期値
 	
@@ -35,10 +39,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		ClearDrawScreen(); // 画面をクリアにする
 
 		// ゲームの骨組み処理
-		ScrollBG(1); // 背景のスクロール
-		ScrollWY(1); // 道路のスクロール
+		ScrollBG(speed / 10); // 背景のスクロール
+		ScrollWY(speed / 10); // 道路のスクロール
 		PlayerSpeed(); // プレイヤーの速度（キー入力）
 		Player(); // プレイヤーの描画
+		Distance(); // 残り距離
 
 		SetFontSize(30);
 		DrawFormatString(WIDTH / 2, HEIGHT / 2, GetColor(0,0,0),"%d",speed);
@@ -101,34 +106,64 @@ void ScrollWY(int spd)
 // プレイヤーの速度
 void PlayerSpeed(void)
 {
-	bool left = false; // 左キーの入力状態（押されていない）
+	int left = 0; // 左キー
+	int up = 0; // 上キー
+	int right = 0; // 右キー
 	keyTimer++;
-	if (CheckHitKey(KEY_INPUT_LEFT) && left == false) // 上キーが初めて入力された時
+	if (CheckHitKey(KEY_INPUT_LEFT))
+	{
+		left++;
+	}
+	/*else if(CheckHitKey(KEY_INPUT_LEFT) == 0)
+	{ 
+		left = 0; 
+	}*/
+	if (CheckHitKey(KEY_INPUT_UP))
+	{
+		up++;
+	}
+	/*else if(CheckHitKey(KEY_INPUT_UP) == 0)
+	{
+		up = 0; 
+	}*/
+	if (CheckHitKey(KEY_INPUT_RIGHT))
+	{
+		right++;
+	}
+	/*else if(CheckHitKey(KEY_INPUT_RIGHT) == 0)
+	{ 
+		right = 0; 
+	}*/
+	if (left == 1) // 上キーが初めて入力された時
 	{
 		keyTimer = 0; // タイマーリセット
-		left = true;
-		if (CheckHitKey(KEY_INPUT_UP) && keyTimer <= 18) // 上キーが左キーが押されてから0.3秒以内に入力されたとき
+		//left = 0;
+		if (up == 1 && keyTimer >= 2) // 上キーが左キーが押されてから0.3秒以内に入力されたとき
 		{
 			keyTimer = 0;
-			if (CheckHitKey(KEY_INPUT_RIGHT) && keyTimer <= 18) // 右キーが上キーが押されてから0.3秒以内に入力されたとき
+			if (right == 1 ) // 右キーが上キーが押されてから0.3秒以内に入力されたとき
 			{
-				speed += 10; // 速度増加
+				if (speed < 200) { speed += 10; } // 最大速度200
+				else { speed = 200; }
+				keyTimer = 0;
 			}
-			else
+			else if (keyTimer > 60) //速度減少
 			{
-				speed -= 10; // 速度減少
-				left = false;
+				if (speed > 0) { speed -= 10; } // 最低速度0
+				else { speed = 0; }
 			}
 		}
-		else
+		else if(keyTimer > 60)
 		{
-			speed -= 10;
-			left = false;
+			if (speed > 0) { speed -= 10; }
+			else { speed = 0; }
+			keyTimer = 0;
 		}
 	}
-	else if(keyTimer > 120) // 2秒間何も入力がなかったら
+	else if (keyTimer > 90) // 1.5秒間何も入力がなかったら
 	{
-		speed -= 10;
+		if (speed > 0) { speed -= 10; }
+		else { speed = 0; }
 		keyTimer = 0;
 	}
 	else {}
@@ -166,4 +201,11 @@ void Player(void)
 	{
 		DrawGraph(player.x, player.y + 4, imgPlayer[1], true);
 	}
+}
+
+// ゴールまでの距離
+void Distance(void)
+{
+	SetFontSize(30);
+	DrawFormatString(WIDTH -200, 50, GetColor(0, 0, 0), "残り %dｍ", distance);
 }
