@@ -8,14 +8,18 @@ const int FPS = 60; // フレームレート
 
 // 構造体
 struct OBJECT player; // プレイヤーの構造体変数
+struct OBJECT enemy; // 敵の構造体
 
 // グローバル変数
 int imgBackGrass; // 背景画像（草）
 int imgPlayer[2]; // プレイヤー画像
 int imgWayGrass1, imgWayGrass2; // 道路画像（草）
+int imgEnemy[2]; // 敵画像
 int speed = 100; // プレイヤーの速度
 int keyTimer; // キー入力タイマー
+int keyStep = 0; // 0=左,1=上,2=右、過去のキーを覚える
 int distance; // ゴールまでの残り距離（最低2000）
+int eneSpeed = 120; // 敵の速度
 
 
 // グローバル関数
@@ -43,10 +47,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		ScrollWY(speed / 10); // 道路のスクロール
 		PlayerSpeed(); // プレイヤーの速度（キー入力）
 		Player(); // プレイヤーの描画
+		Enemy(); // 敵の描画
 		Distance(); // 残り距離
+		Goal(); // ゴール
 
-		SetFontSize(30);
-		DrawFormatString(WIDTH / 2, HEIGHT / 2, GetColor(0,0,0),"%d",speed);
+		
 
 
 		ScreenFlip(); // 裏画面の内容を表画面に反映させる
@@ -68,6 +73,8 @@ void InitGame(void)
 	imgPlayer[1] = LoadGraph("Material/Robot/green2.png");
 	imgWayGrass1 = LoadGraph("Material/Way/grass.png"); // 道路画像（草）
 	imgWayGrass2 = LoadGraph("Material/Way/grass2.png");
+	imgEnemy[0] = LoadGraph("Material/Robot/yellow1.png"); // 敵画像
+	imgEnemy[1] = LoadGraph("Material/Robot/yellow2.png");
 }
 
 // ゲーム開始時の初期値
@@ -79,6 +86,12 @@ void InitVariable(void)
 	player.imageNum = 0; // プレイヤーの画像の番号
 	player.timer = 0; // タイマー
 	player.interval = 0; // フレームの間隔
+	// 敵の構造体
+	enemy.x = WIDTH / 2 - 92; // 敵の左上のX座標
+	enemy.y = HEIGHT - 140 - 150 - 20; // 敵の左上のY座標
+	enemy.imageNum = 0; // 敵の画像番号
+	enemy.timer = 0; // 敵タイマー
+	enemy.interval; // 敵のフレーム間隔
 }
 
 // 背景のスクロール
@@ -106,67 +119,99 @@ void ScrollWY(int spd)
 // プレイヤーの速度
 void PlayerSpeed(void)
 {
-	int left = 0; // 左キー
-	int up = 0; // 上キー
-	int right = 0; // 右キー
+	static int oldLeft = 0; // 左キーの記録
+	static int oldUp = 0; // 上キーの記録
+	static int oldRight = 0; // 右キーの記録
+	int left = CheckHitKey(KEY_INPUT_LEFT); // 左キー
+	int up = CheckHitKey(KEY_INPUT_UP); // 上キー
+	int right = CheckHitKey(KEY_INPUT_RIGHT); // 右キー
 	keyTimer++;
-	if (CheckHitKey(KEY_INPUT_LEFT))
+	if (left == 1 && oldLeft == 0) // 左キー
 	{
-		left++;
-	}
-	/*else if(CheckHitKey(KEY_INPUT_LEFT) == 0)
-	{ 
-		left = 0; 
-	}*/
-	if (CheckHitKey(KEY_INPUT_UP))
-	{
-		up++;
-	}
-	/*else if(CheckHitKey(KEY_INPUT_UP) == 0)
-	{
-		up = 0; 
-	}*/
-	if (CheckHitKey(KEY_INPUT_RIGHT))
-	{
-		right++;
-	}
-	/*else if(CheckHitKey(KEY_INPUT_RIGHT) == 0)
-	{ 
-		right = 0; 
-	}*/
-	if (left == 1) // 上キーが初めて入力された時
-	{
-		keyTimer = 0; // タイマーリセット
-		//left = 0;
-		if (up == 1 && keyTimer >= 2) // 上キーが左キーが押されてから0.3秒以内に入力されたとき
+		if (keyStep == 0)
 		{
+			keyStep = 1;
 			keyTimer = 0;
-			if (right == 1 ) // 右キーが上キーが押されてから0.3秒以内に入力されたとき
-			{
-				if (speed < 200) { speed += 10; } // 最大速度200
-				else { speed = 200; }
-				keyTimer = 0;
-			}
-			else if (keyTimer > 60) //速度減少
-			{
-				if (speed > 0) { speed -= 10; } // 最低速度0
-				else { speed = 0; }
-			}
 		}
-		else if(keyTimer > 60)
+		else
 		{
-			if (speed > 0) { speed -= 10; }
-			else { speed = 0; }
+			if (speed > 0)
+			{
+				speed -= 10;
+			}
+			else
+			{
+				speed = 0;
+			}
+			keyStep = 0;
 			keyTimer = 0;
 		}
 	}
-	else if (keyTimer > 90) // 1.5秒間何も入力がなかったら
+	if (up == 1 && oldUp == 0) // 上キー
 	{
-		if (speed > 0) { speed -= 10; }
-		else { speed = 0; }
+		if (keyStep == 1)
+		{
+			keyStep = 2;
+			keyTimer = 0;
+		}
+		else
+		{
+			if (speed > 0)
+			{
+				speed -= 10;
+			}
+			else
+			{
+				speed = 0;
+			}
+			keyStep = 0;
+			keyTimer = 0;
+		}
+	}
+	if (right == 1 && oldRight == 0) // 右キー
+	{
+		if (keyStep == 2)
+		{
+			if (speed < 200)
+			{
+				speed += 10;
+			}
+			else
+			{
+				speed = 200;
+			}
+			keyStep = 0;
+			keyTimer = 0;
+		}
+		else
+		{
+			if (speed > 0)
+			{
+				speed -= 10;
+			}
+			keyStep = 0;
+			keyTimer = 0;
+		}
+	}
+	if (keyTimer > 60)
+	{
+		if (speed > 0)
+		{
+			speed -= 10;
+		}
+		else
+		{
+			speed = 0;
+		}
+		keyStep = 0;
 		keyTimer = 0;
 	}
-	else {}
+	oldLeft = left;
+	oldUp = up;
+	oldRight = right;
+
+	SetFontSize(30);
+	DrawFormatString(WIDTH - 360, 85, GetColor(0, 0, 0), "現在のスピード　%dkm", speed);
 }
 
 // プレイヤーの描画
@@ -203,9 +248,57 @@ void Player(void)
 	}
 }
 
+// 敵の描画
+void Enemy(void)
+{
+	enemy.timer++;
+	if (speed == 0) // 速度０の時
+	{
+		DrawGraph(enemy.x, enemy.y, imgEnemy[0], true);
+	}
+	else // 速度が０より大きいとき
+	{
+		player.interval = 23 - speed / 10; // スピードごとのフレーム間隔
+		if (player.timer >= player.interval) // 一定フレームが経過した
+		{
+			player.timer = 0;
+			if (player.imageNum == 0) // 画像番号の切り替え
+			{
+				player.imageNum = 1;
+			}
+			else
+			{
+				player.imageNum = 0;
+			}
+		}
+	}
+	if (player.imageNum == 0) // 画像番号でプレイヤーの描画
+	{
+		DrawGraph(player.x, player.y, imgPlayer[0], true);
+	}
+	else
+	{
+		DrawGraph(player.x, player.y + 4, imgPlayer[1], true);
+	}
+}
+
 // ゴールまでの距離
 void Distance(void)
 {
 	SetFontSize(30);
 	DrawFormatString(WIDTH -200, 50, GetColor(0, 0, 0), "残り %dｍ", distance);
+}
+
+// ゴール
+void Goal(void)
+{
+	if (speed != 0)
+	{
+		distance = distance - speed / 60;
+	}
+	else{}
+	if (distance == 0)
+	{
+		speed = 0;
+	}
 }
