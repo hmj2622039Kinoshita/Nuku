@@ -91,7 +91,8 @@ void InitVariable(void)
 	enemy.y = HEIGHT - 140 - 150 - 20; // “G‚Ì¶ã‚ÌYÀ•W
 	enemy.imageNum = 0; // “G‚Ì‰æ‘œ”Ô†
 	enemy.timer = 0; // “Gƒ^ƒCƒ}[
-	enemy.interval; // “G‚ÌƒtƒŒ[ƒ€ŠÔŠu
+	enemy.interval = 0; // “G‚ÌƒtƒŒ[ƒ€ŠÔŠu
+	enemy.speed = 0; // “G‚Ì‘¬“x
 }
 
 // ”wŒi‚ÌƒXƒNƒ[ƒ‹
@@ -252,34 +253,49 @@ void Player(void)
 void Enemy(void)
 {
 	enemy.timer++;
-	if (speed == 0) // ‘¬“x‚O‚Ì
+	if (enemy.speed == 0) // ‘¬“x‚O‚Ì
 	{
 		DrawGraph(enemy.x, enemy.y, imgEnemy[0], true);
 	}
 	else // ‘¬“x‚ª‚O‚æ‚è‘å‚«‚¢‚Æ‚«
 	{
-		player.interval = 23 - speed / 10; // ƒXƒs[ƒh‚²‚Æ‚ÌƒtƒŒ[ƒ€ŠÔŠu
-		if (player.timer >= player.interval) // ˆê’èƒtƒŒ[ƒ€‚ªŒo‰ß‚µ‚½
+		enemy.interval = 23 - enemy.speed / 10; // ƒXƒs[ƒh‚²‚Æ‚ÌƒtƒŒ[ƒ€ŠÔŠu
+		if (enemy.timer >= enemy.interval) // ˆê’èƒtƒŒ[ƒ€‚ªŒo‰ß‚µ‚½
 		{
-			player.timer = 0;
-			if (player.imageNum == 0) // ‰æ‘œ”Ô†‚ÌØ‚è‘Ö‚¦
+			enemy.timer = 0;
+			if (enemy.imageNum == 0) // ‰æ‘œ”Ô†‚ÌØ‚è‘Ö‚¦
 			{
-				player.imageNum = 1;
+				enemy.imageNum = 1;
 			}
 			else
 			{
-				player.imageNum = 0;
+				enemy.imageNum = 0;
 			}
 		}
 	}
-	if (player.imageNum == 0) // ‰æ‘œ”Ô†‚ÅƒvƒŒƒCƒ„[‚Ì•`‰æ
+	if (enemy.imageNum == 0) // ‰æ‘œ”Ô†‚ÅƒvƒŒƒCƒ„[‚Ì•`‰æ
 	{
-		DrawGraph(player.x, player.y, imgPlayer[0], true);
+		DrawGraph(enemy.x, enemy.y, imgEnemy[0], true);
 	}
 	else
 	{
-		DrawGraph(player.x, player.y + 4, imgPlayer[1], true);
+		DrawGraph(enemy.x, enemy.y + 4, imgEnemy[1], true);
 	}
+	enemy.speed += 20 / 60;
+	if (enemy.speed > 120)
+	{
+		enemy.speed = 120;
+	}
+	int distanceCar = abs(enemy.speed - player.speed);
+	if (enemy.speed > player.speed)
+	{
+		enemy.x += distanceCar / 60;
+	}
+	if (enemy.speed < player.speed)
+	{
+		enemy.x -= distanceCar / 60;
+	}
+	else{}
 }
 
 // ƒS[ƒ‹‚Ü‚Å‚Ì‹——£
@@ -292,13 +308,5 @@ void Distance(void)
 // ƒS[ƒ‹
 void Goal(void)
 {
-	if (speed != 0)
-	{
-		distance = distance - speed / 60;
-	}
-	else{}
-	if (distance == 0)
-	{
-		speed = 0;
-	}
+	
 }

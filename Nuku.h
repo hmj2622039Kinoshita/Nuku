@@ -8,6 +8,8 @@ struct OBJECT // プレイヤーと敵用
 	int imageNum; // 画像の番号
 	int timer; // タイマー
 	int interval; // フレーム間隔
+	int speed; // 速度
+	int distance; // 距離
 };
 
 // 関数プロトタイプ宣言
