@@ -18,9 +18,10 @@ int imgEnemy[2]; // 敵画像
 int speed = 100; // プレイヤーの速度
 int keyTimer; // キー入力タイマー
 int keyStep = 0; // 0=左,1=上,2=右、過去のキーを覚える
-int distance; // ゴールまでの残り距離（最低2000）
-int eneSpeed = 120; // 敵の速度
-
+int distance; // ゴールまでの残り距離
+int startTimer = 0; // 開始からのタイマー
+int playerMove = 0; // プレイヤーの移動総距離
+int enemyMove  = 0; // 敵の移動総距離
 
 // グローバル関数
 int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
@@ -46,8 +47,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		ScrollBG(speed / 10); // 背景のスクロール
 		ScrollWY(speed / 10); // 道路のスクロール
 		PlayerSpeed(); // プレイヤーの速度（キー入力）
-		Player(); // プレイヤーの描画
+		EnemyDistance(); // 敵の位置
 		Enemy(); // 敵の描画
+		Player(); // プレイヤーの描画
 		Distance(); // 残り距離
 		Goal(); // ゴール
 
@@ -88,11 +90,12 @@ void InitVariable(void)
 	player.interval = 0; // フレームの間隔
 	// 敵の構造体
 	enemy.x = WIDTH / 2 - 92; // 敵の左上のX座標
-	enemy.y = HEIGHT - 140 - 150 - 20; // 敵の左上のY座標
+	enemy.y = HEIGHT - 140 - 150; // 敵の左上のY座標
 	enemy.imageNum = 0; // 敵の画像番号
 	enemy.timer = 0; // 敵タイマー
 	enemy.interval = 0; // 敵のフレーム間隔
 	enemy.speed = 0; // 敵の速度
+	enemy.spTimer; // 敵のスピード管理用タイマー
 }
 
 // 背景のスクロール
@@ -127,11 +130,11 @@ void PlayerSpeed(void)
 	int up = CheckHitKey(KEY_INPUT_UP); // 上キー
 	int right = CheckHitKey(KEY_INPUT_RIGHT); // 右キー
 	keyTimer++;
-	if (left == 1 && oldLeft == 0) // 左キー
+	if (left == 1 && oldLeft == 0) // 左キーが押されていなくて押された
 	{
 		if (keyStep == 0)
 		{
-			keyStep = 1;
+			keyStep = 1; // 上
 			keyTimer = 0;
 		}
 		else
@@ -144,15 +147,15 @@ void PlayerSpeed(void)
 			{
 				speed = 0;
 			}
-			keyStep = 0;
+			keyStep = 0; // 左
 			keyTimer = 0;
 		}
 	}
-	if (up == 1 && oldUp == 0) // 上キー
+	if (up == 1 && oldUp == 0) // 上キーが押されてなくて押された
 	{
-		if (keyStep == 1)
+		if (keyStep == 1) // 上
 		{
-			keyStep = 2;
+			keyStep = 2; // 右
 			keyTimer = 0;
 		}
 		else
@@ -165,13 +168,13 @@ void PlayerSpeed(void)
 			{
 				speed = 0;
 			}
-			keyStep = 0;
+			keyStep = 0; // 左
 			keyTimer = 0;
 		}
 	}
-	if (right == 1 && oldRight == 0) // 右キー
+	if (right == 1 && oldRight == 0) // 右キーが押されてなくて押された
 	{
-		if (keyStep == 2)
+		if (keyStep == 2) // 右
 		{
 			if (speed < 200)
 			{
@@ -181,7 +184,7 @@ void PlayerSpeed(void)
 			{
 				speed = 200;
 			}
-			keyStep = 0;
+			keyStep = 0; // 左
 			keyTimer = 0;
 		}
 		else
@@ -190,11 +193,11 @@ void PlayerSpeed(void)
 			{
 				speed -= 10;
 			}
-			keyStep = 0;
+			keyStep = 0; // 左
 			keyTimer = 0;
 		}
 	}
-	if (keyTimer > 60)
+	if (keyTimer > 60) // 何も入力がなかったら
 	{
 		if (speed > 0)
 		{
@@ -210,7 +213,7 @@ void PlayerSpeed(void)
 	oldLeft = left;
 	oldUp = up;
 	oldRight = right;
-
+	// 速度表示
 	SetFontSize(30);
 	DrawFormatString(WIDTH - 360, 85, GetColor(0, 0, 0), "現在のスピード　%dkm", speed);
 }
@@ -252,6 +255,14 @@ void Player(void)
 // 敵の描画
 void Enemy(void)
 {
+	// 徐々にスピード上げる
+	enemy.spTimer++;
+	if (enemy.spTimer > 60)
+	{
+		enemy.speed += 10;
+		enemy.spTimer = 0; // タイマーリセット
+	}
+	// 敵のアニメーション
 	enemy.timer++;
 	if (enemy.speed == 0) // 速度０の時
 	{
@@ -281,21 +292,30 @@ void Enemy(void)
 	{
 		DrawGraph(enemy.x, enemy.y + 4, imgEnemy[1], true);
 	}
-	enemy.speed += 20 / 60;
-	if (enemy.speed > 120)
+	if (enemy.speed > 110)
 	{
-		enemy.speed = 120;
+		enemy.speed = 110;
 	}
-	int distanceCar = abs(enemy.speed - player.speed);
-	if (enemy.speed > player.speed)
+
+	SetFontSize(30);
+	DrawFormatString(WIDTH /2, 85, GetColor(0, 0, 0), "現在のスピード　%dkm", enemy.speed);
+}
+
+// 敵の位置
+void EnemyDistance(void)
+{
+	float space; // 二台の間の距離
+	playerMove += startTimer * speed;
+	enemyMove += startTimer * enemy.speed;
+	space = abs(playerMove - enemyMove);
+	if (playerMove > enemyMove)
 	{
-		enemy.x += distanceCar / 60;
+		enemy.x -= space / 60;
 	}
-	if (enemy.speed < player.speed)
+	if (playerMove < enemyMove)
 	{
-		enemy.x -= distanceCar / 60;
+		enemy.x += space / 60;
 	}
-	else{}
 }
 
 // ゴールまでの距離

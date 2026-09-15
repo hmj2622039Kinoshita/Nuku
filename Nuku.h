@@ -10,6 +10,7 @@ struct OBJECT // プレイヤーと敵用
 	int interval; // フレーム間隔
 	int speed; // 速度
 	int distance; // 距離
+	int spTimer; // 速度管理タイマー
 };
 
 // 関数プロトタイプ宣言
@@ -20,5 +21,6 @@ void ScrollWY(int spd); // 道路のスクロール関数
 void PlayerSpeed(void); // プレイヤーの速度用関数
 void Player(void); // プレイヤー描画用の関数
 void Enemy(void); // 敵の描画
+void EnemyDistance(void); // 敵の位置
 void Distance(void); // ゴールまでの残り距離
 void Goal(void); // ゴール
