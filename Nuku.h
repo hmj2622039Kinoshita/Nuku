@@ -20,7 +20,14 @@ void ScrollBG(int spd); // 背景のスクロール関数
 void ScrollWY(int spd); // 道路のスクロール関数
 void PlayerSpeed(void); // プレイヤーの速度用関数
 void Player(void); // プレイヤー描画用の関数
+void Text(void); // テキストの表示
 void Enemy(void); // 敵の描画
+void EnemySpeed(void); // 敵の速度管理
 void EnemyDistance(void); // 敵の位置
 void Distance(void); // ゴールまでの残り距離
 void Goal(void); // ゴール
+void Win(void); // 勝ちシーン
+void Lose(void); // 負けシーン
+void Title(void); // タイトルシーン
+void TitleCar(void); // タイトルシーンの車用関数
+void Explanation(void); // ゲーム説明
