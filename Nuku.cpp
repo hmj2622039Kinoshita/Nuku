@@ -31,7 +31,7 @@ int keyStep = 0; // 0=左,1=上,2=右、過去のキーを覚える
 int distance; // ゴールまでの残り距離
 int playerMove = 0; // プレイヤーの移動総距離
 int enemyMove  = 0; // 敵の移動総距離
-int countDown = 5; // 開始までのカウントダウン
+int countDown; // 開始までのカウントダウン
 int imageNum = 0; // タイトル用車の画像番号
 bool enemySpeed = true; // 敵の速度の増加管理
 
@@ -45,12 +45,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	SetBackgroundColor(0, 0, 0); // 背景色の指定
 	SetDrawScreen(DX_SCREEN_BACK); // 描画面を裏背景にする
 	
-	// 距離のランダム値
-	srand((static_cast<int>(time(NULL)))); // ランダムシード
-	distance = rand() % 7001 + 1000;// ゴールまでの残り距離
-	InitGame(); // 初期化用の関数を呼び出す
-	InitVariable(); // ゲーム開始時の初期値
-	
 	while (1)
 	{
 		ClearDrawScreen(); // 画面をクリアにする
@@ -59,6 +53,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		switch (scene)
 		{
 		case 1: // タイトルシーン
+			// 距離のランダム値
+			srand((static_cast<int>(time(NULL)))); // ランダムシード
+			distance = rand() % 7001 + 1000;// ゴールまでの残り距離
+			InitGame(); // 初期化用の関数を呼び出す
+			InitVariable(); // ゲーム開始時の初期値
 			ScrollBG(0); // 背景
 			ScrollWY(0); // 道路のスクロール
 			Title(); // タイトル
@@ -139,6 +138,8 @@ void InitVariable(void)
 	enemy.interval = 0; // 敵のフレーム間隔
 	enemy.speed = 0; // 敵の速度
 	enemy.spTimer = 0; // 敵のスピード管理用タイマー
+
+	countDown = 5; // カウントダウン
 }
 
 // 背景のスクロール
