@@ -140,6 +140,7 @@ void InitVariable(void)
 	enemy.spTimer = 0; // 敵のスピード管理用タイマー
 
 	countDown = 5; // カウントダウン
+	enemySpeed = true; // 敵の速度のbool値
 }
 
 // 背景のスクロール
